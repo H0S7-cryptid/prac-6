@@ -6,7 +6,7 @@ Group* CreateDynamicClass() {
 	int buffer;
 	lvlOfPrep lvl;
 	std::cout << "Enter required data: " << std::endl;
-	std::cout << "Group name -> study direction -> enrollment year -> \n -> level of preparation (0 - Bachelor, 1 - Master): " << std::endl;
+	std::cout << "Order: Group name -> study direction -> enrollment year -> \n-> level of preparation (0 - Bachelor, 1 - Master): " << std::endl;
 	std::cin >> name >> direction >> year >> buffer;
 	lvl = (lvlOfPrep)buffer;
 
@@ -15,29 +15,46 @@ Group* CreateDynamicClass() {
 }
 
 Group::Group(std::string g, std::string s, short er, lvlOfPrep l) {
-	isGroupInit done = Init(g, s, er, l);
-	if (done == -1)
-		Init("", "", 1950, BachelorDegree);
+	isGroupInit done = INCRCT_INIT;
+	try {
+		done = Init(g, s, er, l);
+	}
+	catch (std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		Init(g, s, 1950, BachelorDegree);
+	}
+	catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
+		Init(g, s, 1950, l);
+	}
+	catch (std::logic_error& e) {
+		std::cerr << e.what() << std::endl;
+		Init(g, s, er, BachelorDegree);
+	}
+	if (done == INIT_DONE) std::cout << "Initiation complete!" << std::endl;
 }
 
 Group::Group(Group& original) :
 	group_name{ original.group_name }, study_direction{ original.study_direction },
-	enrollment_year{ original.enrollment_year }, lvl{ original.lvl } {}
+	enrollment_year{ original.enrollment_year }, lvl{ original.lvl } {
+}
 
-isGroupInit Group::Init (std::string g, std::string s, short er, lvlOfPrep l) {
+isGroupInit Group::Init(std::string g, std::string s, short er, lvlOfPrep l) {
 	group_name = g;
 	study_direction = s;
-	try {
-		if (er >= 1950 && (l == 0 || l == 1)) {
-			enrollment_year = er;
-			lvl = l;
-		}
-		else throw std::exception{ "Incorrect initialization data!\n" };
+
+	if (!(er >= 1950 && er < 2025) && !(l == BachelorDegree || l == MastersDegree)) {
+		throw std::exception("Incorrect initialization data!\n");
 	}
-	catch (std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		return INCRCT_INIT;
+	else if (!(er >= 1950 && er < 2025)) {
+		throw std::invalid_argument("Incorrect initialization data: wrong enrollment year!\n");
 	}
+	else if (!(l == BachelorDegree || l == MastersDegree)) {
+		throw std::logic_error("Incorrect initialization data: wrong level of preparation!\n");
+	}
+
+	enrollment_year = er;
+	lvl = l;
 	return INIT_DONE;
 }
 
@@ -50,6 +67,6 @@ void Group::Print() {
 	std::cout << std::endl;
 }
 
-void Group::Rename(std::string new_name){
+void Group::Rename(std::string new_name) {
 	group_name = new_name;
 }
